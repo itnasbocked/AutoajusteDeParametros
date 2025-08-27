@@ -46,11 +46,12 @@ velocidad = 8
 player_size = 25
 
 # Propiedades del enemigo
-instanciasEnemigos = 1
+instanciasEnemigos = 3
 LimiteEnemigo = 10  # Limita la velocidad de los enemigos
+canMove = False  # Controla si el jugador se está moviendo
 
-decremento = True  # Controla si se decrementa el límite de enemigos
-aumentoInstancias = True  # Controla si se aumenta el número de instancias de enemigos
+# decremento = True  # Controla si se decrementa el límite de enemigos
+# aumentoInstancias = True  # Controla si se aumenta el número de instancias de enemigos
 
 # Bucle principal
 def mover_personaje(x, y, velocidad, teclas, ancho, alto):
@@ -97,12 +98,12 @@ def actualizar_personaje_y_colisiones(x, y, enemigos, player_size):
 #     return x, y
 
 def game_over():
-    global x, y, enemigos, segundos, start, LimiteEnemigo, instanciasEnemigos
+    global x, y, enemigos, segundos, start, LimiteEnemigo
     x, y = ANCHO // 2, ALTO // 2
-    if instanciasEnemigos > 3:
-        instanciasEnemigos -= 2
-    if LimiteEnemigo < 5:
-        LimiteEnemigo += 2
+    # if instanciasEnemigos > 3:
+    #     instanciasEnemigos -= 2
+    # if LimiteEnemigo < 5:
+    #     LimiteEnemigo += 2
     enemigos = instanciar_enemigos(instanciasEnemigos, ANCHO, ALTO, player_size)
     segundos = 0
     start = False
@@ -124,7 +125,7 @@ while True:
     teclas = pygame.key.get_pressed()
     if teclas[pygame.K_SPACE]:
         start = True
-
+    canMove = any(teclas[key] for key in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN])
         
     #Lógica de enemigos
     def instanciar_enemigos(cantidad, ancho, alto, radio):
@@ -151,7 +152,7 @@ while True:
         x, y = mover_personaje(x, y, velocidad, teclas, ANCHO, ALTO)
         actualizar_personaje_y_colisiones(x, y, enemigos, player_size)
         dibujar_personaje(pantalla, x, y)
-        print(x, y)
+        
 
         def mover_enemigos(enemigos, px, py, ancho, alto, radio):
             for enemigo in enemigos:
@@ -165,32 +166,31 @@ while True:
                     enemigo[3] = (dy / dist) * (velocidad / LimiteEnemigo)
                 enemigo[0] += enemigo[2]
                 enemigo[1] += enemigo[3]
+            # Función anónima para colisiones entre enemigos
+            # colisionar_enemigos = lambda enemigos, radio: [
+            #     (
+            #         enemigo.__setitem__(0, enemigo[0] + (radio if enemigo[0] < otro[0] and abs(enemigo[0] - otro[0]) < 2*radio else -radio if enemigo[0] > otro[0] and abs(enemigo[0] - otro[0]) < 2*radio else 0)),
+            #         enemigo.__setitem__(1, enemigo[1] + (radio if enemigo[1] < otro[1] and abs(enemigo[1] - otro[1]) < 2*radio else -radio if enemigo[1] > otro[1] and abs(enemigo[1] - otro[1]) < 2*radio else 0))
+            #     )
+            #     for i, enemigo in enumerate(enemigos)
+            #     for j, otro in enumerate(enemigos)
+            #     if i != j and ((enemigo[0] - otro[0])**2 + (enemigo[1] - otro[1])**2) < (2*radio)**2
+            # ]
+
+            # colisionar_enemigos(enemigos, radio)
 
         # Mover enemigos
         mover_enemigos(enemigos, x, y, ANCHO, ALTO, player_size)
 
+        
 
         #timer de actualización
         segundos += 1 / FPS
         minutos_mostrar= int(segundos // 60)  # Convertir segundos a minutos
         segundos_mostrar = int(segundos % 60)  # Obtener el resto de los segundos
 
-        if round(segundos) % 3 == 0 and round(segundos) != 0:
-            if decremento:
-                LimiteEnemigo -= 1
-                if LimiteEnemigo < 1:
-                    LimiteEnemigo = 1
-            decremento = False
-        else: 
-            decremento = True
-            
-        if round(segundos) % 10 == 0 and round(segundos) != 0:
-            if aumentoInstancias:
-                instanciasEnemigos += 1
-                enemigos = instanciar_enemigos(instanciasEnemigos, ANCHO, ALTO, player_size)
-            aumentoInstancias = False
-        else: 
-            aumentoInstancias = True
+        LimiteEnemigo = 4 if canMove else 1.5 # Ajusta la velocidad de los enemigos según si el jugador se mueve o no
+
         #Texto de tiempo
         texto_posicion_raton = f"{minutos_mostrar:02d}:{segundos_mostrar:02d}"
         #Dibujar el texto en la pantalla
